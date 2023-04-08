@@ -1,0 +1,9 @@
+. filter=lfs diff=lfs merge=lfs -text
+KEMDy19 filter=lfs diff=lfs merge=lfs -text
+KEMDy20 filter=lfs diff=lfs merge=lfs -text
+KEMDy19/ECG/Session01/Original/Sess01M.csv filter=lfs diff=lfs merge=lfs -text
+KEMDy19/ECG/Session01/Original/Sess01F.csv filter=lfs diff=lfs merge=lfs -text
+KEMDy19/ECG/Session01/Original/Sess02M.csv filter=lfs diff=lfs merge=lfs -text
+KEMDy19/ECG/Session01/Original/Sess03M.csv filter=lfs diff=lfs merge=lfs -text
+KEMDy19/ECG/Session01/Original/Sess03F.csv filter=lfs diff=lfs merge=lfs -text
+KEMDy19/ECG/Session01/Original/Sess02F.csv filter=lfs diff=lfs merge=lfs -text
