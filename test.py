@@ -57,7 +57,7 @@ if args.cuda != 'cuda:0':
 def test(model, test_dataset):
     print("Test start")
     model.eval()
-    loss_func = torch.nn.CrossEntropyLoss(reduction='sum')
+    loss_func = torch.nn.MSELoss().to(train_config['cuda'])
     with torch.no_grad():
         dataloader = DataLoader(test_dataset, args.batch,
                                 collate_fn=lambda x: (x, torch.LongTensor([i['label'] for i in x])))

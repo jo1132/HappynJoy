@@ -1,17 +1,17 @@
 import json
 from collections import Counter
-
 from torch.utils.data import Dataset
+from sklearn.model_selection import train_test_split
 
 class MERDataset(Dataset):
     def __init__(self,data_option='train',path='./'):
-        with open(path+'processed_KEMDy20.json','r') as file:
+        with open(path+'processed_data.json','r') as file:
             data = json.load(file)
-
-        #train = list(range(1,33))
-        #test = list(range(33,41))
-        train = [1, 2, 3]
-        test = [3]
+            
+        train = list(range(1,33))
+        test = list(range(33,41))
+        #train = [1, 2, 3]
+        #test = [3]
         self.emo_map = {'neutral': 0,
          'happy': 1,
          'surprise':2,

@@ -29,14 +29,13 @@ class SpeechExtractorForCrossAttention():
             with torch.no_grad():
                 for idx, i in enumerate(os.listdir(self.args.path)):
                     print('{}/{}'.format(idx + 1, len_))
-                    if '.' not in i:
-                        for j in tqdm(os.listdir(self.args.path + i)):
-                            if '.wav' in j:
-                                wav = self.readfile(j)
-                                encoded = self._encoding(wav, output_hidden_state=False)
-                                pooled_hidden = encoded.last_hidden_state
-                                torch.save(pooled_hidden, embed_path + j[:-4] + '.pt')
-                                torch.cuda.empty_cache()
+                    for j in tqdm(os.listdir(self.args.path)):
+                        if '.wav' in j:
+                            wav = self.readfile(j)
+                            encoded = self._encoding(wav, output_hidden_state=False)
+                            pooled_hidden = encoded.last_hidden_state
+                            torch.save(pooled_hidden, embed_path + j[:-4] + '.pt')
+                            torch.cuda.empty_cache()
 
             print("Wav Embedding Save finished")
 
