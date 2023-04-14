@@ -104,7 +104,7 @@ if __name__ == '__main__':
     # Move All files to one directory
     PATH = './'
     COPYPATH = os.path.join(PATH, "TOTAL")
-    #GenerateSubDir(PATH, COPYPATH)
+    GenerateSubDir(PATH, COPYPATH)
 
 
     # 아까 모아놓았던 경로

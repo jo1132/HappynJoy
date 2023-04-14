@@ -102,7 +102,7 @@ def train(model,optimizer, dataloader):
         batch_x, batch_y = batch[0], batch[1]
 
         outputs = model(batch_x)
-        loss = loss_func(outputs.to(train_config['cuda']), batch_y.to(train_config['cuda']))
+        loss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(train_config['cuda']).to(torch.float32))
         loss_list.append(loss.item())
 
         tqdm_train.set_description('loss is {:.2f}'.format(loss.item()))

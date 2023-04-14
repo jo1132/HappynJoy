@@ -18,6 +18,10 @@ class SpeechExtractorForCrossAttention():
         self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
         self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
 
+        #mini
+        #self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+        #self.encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
+
         if 'hidden_states' not in os.listdir(self.args.path):
             print("Wav Embedding Save")
             os.mkdir(self.args.path + 'hidden_states')
@@ -29,13 +33,21 @@ class SpeechExtractorForCrossAttention():
             with torch.no_grad():
                 for idx, i in enumerate(os.listdir(self.args.path)):
                     print('{}/{}'.format(idx + 1, len_))
-                    for j in tqdm(os.listdir(self.args.path)):
-                        if '.wav' in j:
-                            wav = self.readfile(j)
-                            encoded = self._encoding(wav, output_hidden_state=False)
-                            pooled_hidden = encoded.last_hidden_state
-                            torch.save(pooled_hidden, embed_path + j[:-4] + '.pt')
-                            torch.cuda.empty_cache()
+                    if os.path.splitext(i)[-1] == '.wav':
+                        '''
+                        for j in tqdm(os.listdir(self.args.path)):
+                            if os.path.splitext(j)[-1] == '.wav':
+                                wav = self.readfile(j)
+                                encoded = self._encoding(wav, output_hidden_state=False)
+                                pooled_hidden = encoded.last_hidden_state
+                                torch.save(pooled_hidden, embed_path + j[:-4] + '.pt')
+                                torch.cuda.empty_cache()
+                        '''
+                        wav = self.readfile(i)
+                        encoded = self._encoding(wav, output_hidden_state=False)
+                        pooled_hidden = encoded.last_hidden_state
+                        torch.save(pooled_hidden, embed_path + i[:-4] + '.pt')
+                        torch.cuda.empty_cache()
 
             print("Wav Embedding Save finished")
 
@@ -45,8 +57,7 @@ class SpeechExtractorForCrossAttention():
         if file_name[0] in ['M', 'F']:
             path = self.args.path + 'emotiondialogue/' + file_name
         else:
-            session = 'Session' + file_name[4:6] + '/'
-            path = self.args.path + session + file_name
+            path = self.args.path + file_name
         wav, _ = sf.read(path)
         return wav
 
@@ -66,7 +77,7 @@ class SpeechExtractorForCrossAttention():
 
         for data in file_name:
 
-            hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
+            hidden = torch.load(self.file_path+'hidden_states/'+'wav_'+data,map_location=self.args.cuda)
             #print(hidden.size())
             seq = hidden.size()[1]
             if seq > self.max_len:
@@ -90,6 +101,10 @@ class TextEncoderForCrossAttention(nn.Module):
         #self.model = ElectraModel.from_pretrained("beomi/KcELECTRA-base")
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
         self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
+        # mini
+        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
+        #self.model = ElectraModel.from_pretrained("monologg/koelectra-small-v3-discriminator")
+
         self.model.to(self.args.cuda)
 
         for params in self.model.parameters():
@@ -194,9 +209,9 @@ class MultiModalForCrossAttention(nn.Module):
         hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
         hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
         out = torch.cat([hidden_audio2text, hidden_text2audio], dim=1)
-        out = self.classifier(out)
 
-        return out
+        return self.classifier(out)
+
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ audio_config = {
     'output_dim': 256,
     'use': 'hidden_state',
     'num_label': 7,
-    'path': '../KEMDy20/wav/',
+    'path': './',
     'cuda': 'cuda:0',
     # about 10s of wav files
     'max_length' : 512
@@ -28,8 +28,8 @@ multimodal_config = {
 }
 
 train_config = {
-    #'epochs': 30,
-    'epochs': 5,
+    'epochs': 100,
+    #'epochs': 5,
     'batch_size': 64,
     'lr': 5e-5,
     'accumulation_steps': 8,
@@ -52,7 +52,9 @@ cross_attention_config = {
     'dropout': 0.1,
     'cuda': 'cuda:0',
     'num_heads': 8,
-    'layers': 1,
+    #mini
+    #'layers': 1,
+    'layers': 3,
     'attn_dropout': 0,
     'relu_dropout': 0,
     'res_dropout': 0,
