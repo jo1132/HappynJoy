@@ -1,0 +1,8 @@
+audio_only_teacher
+number of parameter = 43714055
+training_time = 
+inferiment_time = 	
+		'one model' : 87.98659443855286
+		'6 models' : 82.33990478515625, 80.66280460357666, 80.57128167152405, 80.22265386581421,  80.27669763565063, 80.85292458534241
+acc = 
+	
