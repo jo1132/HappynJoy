@@ -8,7 +8,7 @@ from torch.utils.data.dataloader import DataLoader
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
 
 from models.multimodal import TextEncoder, SpeechEncoder
-from merdataset import *
+from my_merdataset import *
 from config import *
 from utils import *
 
@@ -58,10 +58,9 @@ def test(model, test_dataset):
     print("Test start")
     model.eval()
     loss_func = torch.nn.CrossEntropyLoss(reduction='sum')
-    #loss_func = torch.nn.MSELoss().to(train_config['cuda'])
     with torch.no_grad():
         dataloader = DataLoader(test_dataset, args.batch,
-                                collate_fn=lambda x: (x, torch.LongTensor([i['label'] for i in x])))
+                                collate_fn=lambda x: (x, torch.FloatTensor([i['label'] for i in x])))
         losses = 0
         pred = []
         labels = []
@@ -71,6 +70,13 @@ def test(model, test_dataset):
         for batch in dataloader:
             batch_x, batch_y = batch[0], batch[1]
             batch_y = batch_y.to(args.cuda)
+            
+            # Softmax to Hard target
+            for i, data in enumerate(batch_y):
+                #print(data.max(dim=-1)[1])
+                max_data = data.max(dim=-1)[1]#.tolist()[0]
+                
+                batch_y[i] = max_data
 
             if isinstance(model,SpeechEncoder) or isinstance(model,TextEncoder):
                 outputs = model(batch_x,do_clf=args.do_clf)
@@ -91,6 +97,12 @@ def test(model, test_dataset):
             tq_test.update()
 
         losses = losses / len(test_dataset)
+
+        
+        for i, data in enumerate(labels):
+            labels[i] = data.index(max(data))
+
+        print(labels)
         acc = accuracy_score(labels, pred) * 100
         recall = recall_score(labels, pred, average='weighted') * 100
         precision = precision_score(labels, pred, average='weighted') * 100
@@ -111,7 +123,7 @@ def main():
     text_conf = pd.Series(text_config)
 
     if args.model_name:
-        test_data = MERDataset(data_option='test', path='./data/')
+        test_data = MERGEDataset(data_option='test', path='./data/')
         test_data.prepare_text_data(text_conf)
 
         model = torch.load('./ckpt/{}.pt'.format(args.model_name))
@@ -130,7 +142,7 @@ def main():
     elif args.all:
         model_names = os.listdir('./ckpt/test_all/')
         print(model_names)
-        test_data = MERDataset(data_option='test', path='./data/')
+        test_data = MERGEDataset(data_option='test', path='./data/')
         test_data.prepare_text_data(text_conf)
         df = []
         for name in model_names:

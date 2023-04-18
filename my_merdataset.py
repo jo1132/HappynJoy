@@ -39,10 +39,7 @@ class MERGEDataset(Dataset):
                 emo = self.emo_map[emo]
                 emo_list[emo] += 1
             
-            emo_sum = sum(emo_list)
-            emo_sum = list(map((lambda x: x/emo_sum), emo_list))
-            
-            self.data[idx]['label'] = emo_list
+            self.data[idx]['label'] = list(map((lambda x: x/sum(emo_list)), emo_list))
 
     def __len__(self):
         return len(self.data)

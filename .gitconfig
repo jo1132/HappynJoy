@@ -1,0 +1,10 @@
+[user]
+	name = jo1132
+	email = jhk1132@gmail.com
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[credential]
+	helper = "!f() { /root/.vscode-server/bin/e344f1f539a80912a0e9357cec841f36ce97a4e2/node /tmp/vscode-remote-containers-25168b6dd1935e66759d7b928af9888e6167bd4e.js $*; }; f"
