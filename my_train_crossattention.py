@@ -11,6 +11,7 @@ from models.multimodal_cross_attention import *
 from my_merdataset import *
 from config import *
 from utils import *
+import time
 
 args = None
 
@@ -103,6 +104,9 @@ if args.cuda != 'cuda:0':
 
 
 def train(model,optimizer, dataloader):
+    start_time = time.time()
+
+
     print("Train start")
     model.train()
     model.freeze()
@@ -129,6 +133,9 @@ def train(model,optimizer, dataloader):
     optimizer.zero_grad()
     tqdm_train.close()
     print("Train Loss: {:.5f}".format(sum(loss_list)/len(loss_list)))
+
+    end_time = time.time()
+    print("Total Training time is : ", end_time-start_time)
 
 def main():
     audio_conf = pd.Series(audio_config)
