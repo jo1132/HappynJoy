@@ -70,13 +70,6 @@ def test(model, test_dataset):
         for batch in dataloader:
             batch_x, batch_y = batch[0], batch[1]
             batch_y = batch_y.to(args.cuda)
-            
-            # Softmax to Hard target
-            for i, data in enumerate(batch_y):
-                #print(data.max(dim=-1)[1])
-                max_data = data.max(dim=-1)[1]#.tolist()[0]
-                
-                batch_y[i] = max_data
 
             if isinstance(model,SpeechEncoder) or isinstance(model,TextEncoder):
                 outputs = model(batch_x,do_clf=args.do_clf)
@@ -89,8 +82,15 @@ def test(model, test_dataset):
 
             loss = loss.item()
             losses += loss
+            label = []
 
-            label = batch_y.tolist()
+            for item in batch_y:
+                item = item.tolist()
+                label.append(item.index(max(item)))
+
+            print(label)
+            print(outputs)
+            #label = batch_y.tolist()
             labels.extend(label)
             pred.extend(outputs)
 
@@ -98,11 +98,6 @@ def test(model, test_dataset):
 
         losses = losses / len(test_dataset)
 
-        
-        for i, data in enumerate(labels):
-            labels[i] = data.index(max(data))
-
-        print(labels)
         acc = accuracy_score(labels, pred) * 100
         recall = recall_score(labels, pred, average='weighted') * 100
         precision = precision_score(labels, pred, average='weighted') * 100

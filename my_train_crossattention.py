@@ -102,9 +102,9 @@ def train(model,optimizer, dataloader):
         batch_x, batch_y = batch[0], batch[1]
 
         outputs = model(batch_x)
-        loss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(train_config['cuda']).to(torch.float32))
+        loss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(torch.float32).to(train_config['cuda']))
         loss_list.append(loss.item())
-
+        break
         tqdm_train.set_description('loss is {:.2f}'.format(loss.item()))
         tqdm_train.update()
         loss = loss / accumulation_steps
@@ -157,7 +157,7 @@ def main():
         for epoch in range(args.epochs):
 
             dataloader = DataLoader(dataset, batch_size=args.batch, shuffle=args.shuffle,
-                                        collate_fn=lambda x: (x, torch.LongTensor([i['label'] for i in x])))
+                                        collate_fn=lambda x: (x, torch.FloatTensor([i['label'] for i in x])))
             train(model, optimizer, dataloader)
 
             if (epoch+1) % 5 == 0:
