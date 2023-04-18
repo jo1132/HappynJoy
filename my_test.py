@@ -12,6 +12,7 @@ from my_merdataset import *
 from config import *
 from utils import *
 
+import time
 
 def parse_args():
     parser = argparse.ArgumentParser(description='get arguments')
@@ -55,6 +56,8 @@ if args.cuda != 'cuda:0':
 
 
 def test(model, test_dataset):
+    start_time = time.time()
+    
     print("Test start")
     model.eval()
     loss_func = torch.nn.CrossEntropyLoss(reduction='sum')
@@ -109,6 +112,10 @@ def test(model, test_dataset):
 
         print('Test Result: Loss - {:.5f} | Acc - {:.3f} |\
     Recall - {:.3f} | Precision = {:.3f} | F1 - {:.3f} | STD = {:.3f}'.format(losses, acc, recall, precision, f1,std))
+        
+    end_time = time.time()
+    
+    print("enference time : ", end_time-start_time)
     return losses, acc, recall, precision, f1, confusion, std
 
 
