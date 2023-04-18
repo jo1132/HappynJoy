@@ -104,7 +104,7 @@ def train(model,optimizer, dataloader):
         outputs = model(batch_x)
         loss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(torch.float32).to(train_config['cuda']))
         loss_list.append(loss.item())
-        break
+        
         tqdm_train.set_description('loss is {:.2f}'.format(loss.item()))
         tqdm_train.update()
         loss = loss / accumulation_steps
