@@ -1,0 +1,3 @@
+text_only_teacher
+number of parameter = 43714055
+training_time = 
