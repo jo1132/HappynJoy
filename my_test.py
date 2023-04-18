@@ -88,8 +88,6 @@ def test(model, test_dataset):
                 item = item.tolist()
                 label.append(item.index(max(item)))
 
-            print(label)
-            print(outputs)
             #label = batch_y.tolist()
             labels.extend(label)
             pred.extend(outputs)

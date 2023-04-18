@@ -124,8 +124,12 @@ class TextEncoderForCrossAttention(nn.Module):
 
 
 class MultiModalForCrossAttention(nn.Module):
-    def __init__(self, audio_config, text_config, multi_modal_config):
+    def __init__(self, audio_config, text_config, multi_modal_config, text_only, audio_only):
         super().__init__()
+
+        self.text_only = text_only
+        self.audio_only = audio_only
+
         self.audio_args = audio_config
         self.text_args = text_config
         self.args = multi_modal_config
@@ -140,10 +144,13 @@ class MultiModalForCrossAttention(nn.Module):
         self.res_dropout = self.args.res_dropout
         self.embed_dropout = self.args.embed_dropout
 
-        input_dim = self.args.projection_dim * 2
+        if not (self.text_only or self.audio_only):
+            input_dim = self.args.projection_dim * 2
+        else:
+            input_dim = self.args.projection_dim
 
-        self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda)
         self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
+        self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda)            
 
         self.classifier = nn.Sequential(
             nn.Dropout(self.args.dropout),
@@ -192,23 +199,51 @@ class MultiModalForCrossAttention(nn.Module):
         """
         text, audio should have dimension [batch_size, seq_len, n_features]
         """
-        text_out = self.text_encoder(batch)
-        audio_out = self.audio_encoder(batch)
-        audio_out = self._conv1d(audio_out)
+        if(self.text_only):
+            text_out = self.text_encoder(batch)
+            x_text = text_out.transpose(1, 2)
+            proj_text = x_text.permute(2, 0, 1)
 
-        x_text = text_out.transpose(1, 2)
-        x_audio = audio_out.transpose(1, 2)
+            hidden_audio2text = self.audio2text_transformer(proj_text, proj_text, proj_text)
+            #hidden_text2audio = self.text2audio_transformer(proj_text, proj_audio, proj_audio)
+            hidden_audio2text = hidden_audio2text.permute(1,2,0)
+            hidden_audio2text = self.avgpool(hidden_audio2text)
+            hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
+            #hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
+            out = hidden_audio2text
 
-        proj_text = x_text.permute(2, 0, 1)
-        proj_audio = x_audio.permute(2, 0, 1)
+        elif(self.audio_only):
+            audio_out = self.audio_encoder(batch)
+            audio_out = self._conv1d(audio_out)
+            x_audio = audio_out.transpose(1, 2)
+            proj_audio = x_audio.permute(2, 0, 1)
 
-        hidden_audio2text = self.audio2text_transformer(proj_audio, proj_text, proj_text)
-        hidden_text2audio = self.text2audio_transformer(proj_text, proj_audio, proj_audio)
-        hidden_audio2text = hidden_audio2text.permute(1,2,0)
-        hidden_audio2text = self.avgpool(hidden_audio2text)
-        hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
-        hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
-        out = torch.cat([hidden_audio2text, hidden_text2audio], dim=1)
+            #hidden_audio2text = self.audio2text_transformer(proj_audio, proj_text, proj_text)
+            hidden_text2audio = self.text2audio_transformer(proj_audio, proj_audio, proj_audio)
+            #hidden_audio2text = hidden_audio2text.permute(1,2,0)
+            #hidden_audio2text = self.avgpool(hidden_audio2text)
+            #hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
+            hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
+            out = hidden_text2audio
+
+        else:
+            text_out = self.text_encoder(batch)
+            x_text = text_out.transpose(1, 2)
+            proj_text = x_text.permute(2, 0, 1)
+
+        
+            audio_out = self.audio_encoder(batch)
+            audio_out = self._conv1d(audio_out)
+            x_audio = audio_out.transpose(1, 2)
+            proj_audio = x_audio.permute(2, 0, 1)
+
+            hidden_audio2text = self.audio2text_transformer(proj_audio, proj_text, proj_text)
+            hidden_text2audio = self.text2audio_transformer(proj_text, proj_audio, proj_audio)
+            hidden_audio2text = hidden_audio2text.permute(1,2,0)
+            hidden_audio2text = self.avgpool(hidden_audio2text)
+            hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
+            hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
+            out = torch.cat([hidden_audio2text, hidden_text2audio], dim=1)
 
         return self.classifier(out)
 

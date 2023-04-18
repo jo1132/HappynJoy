@@ -77,6 +77,20 @@ def parse_args():
         help='checkpoint name to load or save'
     )
 
+    parser.add_argument(
+        '--text_only',
+        type=bool,
+        default=False,
+        help='train text encoder only'
+    )
+
+    parser.add_argument(
+        '--audio_only',
+        type=bool,
+        default=False,
+        help='train audio encoder only'
+    )
+
     args = parser.parse_args()
     return args
 
@@ -137,7 +151,7 @@ def main():
         np.random.seed(seed)
         random.seed(seed)
 
-        model = MultiModalForCrossAttention(audio_conf,text_conf,cross_attention_conf)
+        model = MultiModalForCrossAttention(audio_conf,text_conf,cross_attention_conf, args.text_only, args.audio_only)
 
         device = args.cuda
         print('---------------------',device)
