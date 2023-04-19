@@ -107,7 +107,7 @@ class TextEncoderForCrossAttention(nn.Module):
         # pre trained
         #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
         #self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        config = ElectraConfig(num_hidden_layers=12)
+        config = ElectraConfig(num_hidden_layers=12, embedding_size=768, hidden_size=768, num_attention_heads=12, vocab_size=35000, intermediate_size=3072)
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
         self.model = ElectraModel(config)
         #mini version
