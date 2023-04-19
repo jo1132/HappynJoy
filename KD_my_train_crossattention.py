@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from torch.utils.data.dataloader import DataLoader
 
-from models.multimodal_cross_attention import *
 from models.mini_multimodal_cross_attention import *
 from my_merdataset import *
 from mini_config import *
@@ -80,12 +79,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        '--teacher_name',
-        type=str,
-        help='Teacher networks name'
-    )
-
-    parser.add_argument(
         '--text_only',
         type=bool,
         default=False,
@@ -99,6 +92,13 @@ def parse_args():
         help='train audio encoder only'
     )
 
+    parser.add_argument(
+        '--teacher_data_path',
+        type=str,
+        default="distilled_knowledge.csv",
+        help="Distilled teacher's knowledge path"
+    )
+
     args = parser.parse_args()
     return args
 
@@ -110,14 +110,12 @@ if args.cuda != 'cuda:0':
     train_config['cuda'] = args.cuda
 
 
-def train(student, optimizer, dataloader, knowledge):
+def train(model,optimizer, dataloader):
     start_time = time.time()
 
-
     print("Train start")
-    student.train()
-    #student.freeze()
-
+    model.train()
+    model.freeze()
     loss_func = torch.nn.MSELoss().to(train_config['cuda'])
 
     tqdm_train = tqdm(total=len(dataloader), position=1)
@@ -127,15 +125,8 @@ def train(student, optimizer, dataloader, knowledge):
     for batch_id, batch in enumerate(dataloader):
         batch_x, batch_y = batch[0], batch[1]
 
-        teacher_softmax = knowledge[batch_id]
-        outputs = student(batch_x)
-        print(batch_y[0])
-        print(outputs[0])
-        print(teacher_softmax[0])
-        break
-        Standardloss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(torch.float32).to(train_config['cuda']))
-        KDloss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), teacher_softmax.to(torch.float32).to(train_config['cuda']))
-        loss = Standardloss + KDloss
+        outputs = model(batch_x)
+        loss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(torch.float32).to(train_config['cuda']))
         loss_list.append(loss.item())
         
         tqdm_train.set_description('loss is {:.2f}'.format(loss.item()))
@@ -152,24 +143,6 @@ def train(student, optimizer, dataloader, knowledge):
     end_time = time.time()
     print("Total Training time is : ", end_time-start_time)
 
-def knowledge_extraction(teacher, dataset):
-    teacher.eval()
-    with torch.no_grad():
-        dataloader = DataLoader(dataset, args.batch,
-                                collate_fn=lambda x: (x, torch.FloatTensor([i['label'] for i in x])))
-        tq_test = tqdm(total=len(dataloader), desc="Distilling knowledge", position=2)
-        pred = []
-
-        for batch in dataloader:
-            batch_x, batch_y = batch[0], batch[1]
-            #batch_y = batch_y.to(args.cuda)
-
-            outputs = teacher(batch_x)
-            outputs = outputs.max(dim=1)[1].tolist()
-            pred.extend(outputs)
-            tq_test.update()
-    return pred
-
 def main():
     audio_conf = pd.Series(audio_config)
     text_conf = pd.Series(text_config)
@@ -184,7 +157,6 @@ def main():
 
     if args.is_training == True:
         dataset = MERGEDataset(data_option='train', path='./data/')
-        # text_conf same
         dataset.prepare_text_data(text_conf)
 
         seed = 1024
@@ -192,28 +164,19 @@ def main():
         np.random.seed(seed)
         random.seed(seed)
 
-        teacher = torch.load('./{}'.format(args.teacher_name))
-        student = mini_MultiModalForCrossAttention(audio_conf,text_conf,cross_attention_conf, args.text_only, args.audio_only)
+        model = mini_MultiModalForCrossAttention(audio_conf,text_conf,cross_attention_conf, args.text_only, args.audio_only)
 
         device = args.cuda
         print('---------------------',device)
 
-        teacher = teacher.to(device)
-        student = student.to(device)
+        model = model.to(device)
+        optimizer = torch.optim.AdamW(params=model.parameters(), lr=args.lr)
 
-        student_optimizer = torch.optim.AdamW(params=student.parameters(), lr=args.lr)
-        
         if 'ckpt' not in os.listdir():
             os.mkdir('ckpt')
-        print("--------------------------------------------------teacher")
-        print(teacher)
-        get_params(teacher)
-        print("--------------------------------------------------teacher")
 
-        print("--------------------------------------------------student")
-        print(student)
-        get_params(student)
-        print("--------------------------------------------------student")
+        print(model)
+        get_params(model)
 
         if args.save:
             print("checkpoint will be saved every 5epochs!")
@@ -221,13 +184,12 @@ def main():
         for epoch in range(args.epochs):
 
             dataloader = DataLoader(dataset, batch_size=args.batch, shuffle=args.shuffle,
-                                        collate_fn=lambda x: (x, torch.HalfTensor([i['label'] for i in x])))
-            knowledge = knowledge_extraction(teacher, dataset)
-            train(student, student_optimizer, dataloader, knowledge)
+                                        collate_fn=lambda x: (x, torch.FloatTensor([i['label'] for i in x])))
+            train(model, optimizer, dataloader)
 
             if (epoch+1) % 5 == 0:
                 if args.save:
-                    torch.save(student,'./ckpt/{}_epoch{}_student.pt'.format(args.model_name,epoch))
+                    torch.save(model,'./ckpt/{}_epoch{}.pt'.format(args.model_name,epoch))
 
 
 
