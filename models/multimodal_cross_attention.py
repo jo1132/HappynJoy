@@ -157,7 +157,8 @@ class MultiModalForCrossAttention(nn.Module):
             self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
             self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda)            
             
-
+        self.avgpool = nn.AdaptiveAvgPool1d(1)
+        
         self.classifier = nn.Sequential(
             nn.Dropout(self.args.dropout),
             nn.Linear(input_dim, self.args.output_dim),
@@ -167,7 +168,7 @@ class MultiModalForCrossAttention(nn.Module):
         ).to(self.args.cuda)
 
         
-        self.avgpool = nn.AdaptiveAvgPool1d(1)
+        
         #self.flatten = nn.Flatten()
 
 

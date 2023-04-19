@@ -221,7 +221,7 @@ def main():
         for epoch in range(args.epochs):
 
             dataloader = DataLoader(dataset, batch_size=args.batch, shuffle=args.shuffle,
-                                        collate_fn=lambda x: (x, torch.FloatTensor([i['label'] for i in x])))
+                                        collate_fn=lambda x: (x, torch.HalfTensor([i['label'] for i in x])))
             knowledge = knowledge_extraction(teacher, dataset)
             train(student, student_optimizer, dataloader, knowledge)
 
