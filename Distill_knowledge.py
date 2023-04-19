@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_sc
 
 from models.multimodal import TextEncoder, SpeechEncoder
 from my_merdataset import *
-from config import *
+from mini_config import *
 from utils import *
 
 import time
@@ -45,6 +45,16 @@ def parse_args():
         '--do_clf',
         action='store_true',
     )
+
+    parser.add_argument(
+        '--data_path',
+        type=str,
+        default="data/processed_data.json",
+        help="Distilled teacher's knowledge path"
+    )
+
+
+
     args = parser.parse_args()
     return args
 
@@ -54,62 +64,30 @@ if args.cuda != 'cuda:0':
     text_config['cuda'] = args.cuda
     test_config['cuda'] = args.cuda
 
-
-def test(model, test_dataset):
-    start_time = time.time()
-    
-    print("Test start")
-    model.eval()
-
-    with torch.no_grad():
-        dataloader = DataLoader(test_dataset, args.batch,
-                                collate_fn=lambda x: (x, torch.FloatTensor([i['label'] for i in x])))
-        pred = []
-
-        tq_test = tqdm(total=len(dataloader), desc="testing", position=2)
-
-        for batch in dataloader:
-            batch_x, batch_y = batch[0], batch[1]
-            batch_y = batch_y.to(args.cuda)
-
-            if isinstance(model,SpeechEncoder) or isinstance(model,TextEncoder):
-                outputs = model(batch_x,do_clf=args.do_clf)
-
-            else:
-                outputs = model(batch_x)
-
-            outputs = outputs.to(torch.float16)
-            outputs = outputs.tolist()
-            pred.extend(outputs)
-
-            tq_test.update()
-
-    end_time = time.time()
-    
-    return pred
-
-
 def main():
     text_conf = pd.Series(text_config)
-
     if args.model_name:
-        test_data = MERGEDataset(data_option='test', path='./data/')
-        test_data.prepare_text_data(text_conf)
 
         model = torch.load('./ckpt/{}.pt'.format(args.model_name))
-        print(model)
-        output = test(model, test_data)
+        model.eval()
+        #print(model)
+    
         
-        output_path = 'distilled_knowledge.csv'
-        
-        df = pd.DataFrame(output)
-        df.to_csv(output_path, index=False)
-        #print(type(output))
-        #print(output)
-        #if os.path.isdir(os.path.join('result', args.model_name)) == False:
-         #   os.system('mkdir -p ' + os.path.join('result', args.model_name))
-        #save_dict_to_json(result, test_result_path)
-        #print("Finish testing")
+        with open(args.data_path,'r') as file:
+            json_data = json.load(file)
+
+        for sess_key in json_data.keys():
+            for script_key in json_data[sess_key].keys():
+                for i in range(len(json_data[sess_key][script_key])):
+                    if json_data[sess_key][script_key][i].get('knoledge_distillation', 1):
+                        K = text_config['K']
+                        dialogue = [json_data[sess_key][script_key][i]['utterance']]+json_data[sess_key][script_key][i]['history'][:K-1]
+                        dialogue = '[SEP]'.join(dialogue)
+                        json_data[sess_key][script_key][i]['dialogue'] = dialogue
+                        output = model([json_data[sess_key][script_key][i]])
+                        json_data[sess_key][script_key][i]['knoledge_distillation'] = output.tolist()
+                with open("data/test.json",'w') as j:
+                    json.dump(json_data,j,ensure_ascii=False, indent=4)
 
     else:
         print("You need to define specific model name to test")

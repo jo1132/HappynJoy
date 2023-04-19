@@ -1,7 +1,7 @@
 import json
 from collections import Counter
 from torch.utils.data import Dataset
-from sklearn.model_selection import train_test_split
+
 
 class MERGEDataset(Dataset):
     def __init__(self,data_option='train',path='./'):

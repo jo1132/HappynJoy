@@ -6,7 +6,7 @@ import soundfile as sf
 from tqdm import tqdm
 from models.multimodal import encoding
 
-from transformers import Wav2Vec2Processor, Wav2Vec2Model, ElectraTokenizer, ElectraModel
+from transformers import Wav2Vec2Processor, Wav2Vec2Model, Wav2Vec2Config, ElectraTokenizer, ElectraModel, ElectraConfig
 from models.module_for_crossattention.Transformer import *
 
 
@@ -15,12 +15,18 @@ class SpeechExtractorForCrossAttention():
         self.args = config
         self.file_path = self.args.path
         self.max_len = self.args.max_length
-        self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
-        self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
 
+        
+        self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
+        # pretrained
+        #self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
+        # vanila
+        self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=12)
+        self.encoder = Wav2Vec2Model.from_pretrainedwav2vec_config
         #mini
+        #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6)
         #self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
-        #self.encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
+        #self.encoder = Wav2Vec2Model(self.wav2vec_config)
 
         if 'hidden_states' not in os.listdir(self.args.path):
             print("Wav Embedding Save")
@@ -97,13 +103,17 @@ class TextEncoderForCrossAttention(nn.Module):
     def __init__(self,config):
         super().__init__()
         self.args = config
-        #self.tokenizer = ElectraTokenizer.from_pretrained("beomi/KcELECTRA-base")
-        #self.model = ElectraModel.from_pretrained("beomi/KcELECTRA-base")
+
+        # pre trained
+        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
+        #self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
+        config = ElectraConfig(num_hidden_layers=12)
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        # mini
-        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
-        #self.model = ElectraModel.from_pretrained("monologg/koelectra-small-v3-discriminator")
+        self.model = ElectraModel(config)
+        #mini version
+        #config = ElectraConfig(num_hidden_layers=6)
+        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
+        #self.model = ElectraModel(config)
 
         self.model.to(self.args.cuda)
 
@@ -157,8 +167,7 @@ class MultiModalForCrossAttention(nn.Module):
             self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
             self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda)            
             
-        self.avgpool = nn.AdaptiveAvgPool1d(1)
-        
+
         self.classifier = nn.Sequential(
             nn.Dropout(self.args.dropout),
             nn.Linear(input_dim, self.args.output_dim),
@@ -168,8 +177,8 @@ class MultiModalForCrossAttention(nn.Module):
         ).to(self.args.cuda)
 
         
-        
-        #self.flatten = nn.Flatten()
+        self.avgpool = nn.AdaptiveAvgPool1d(1)
+        self.flatten = nn.Flatten()
 
 
     def _conv1d(self, input_features):

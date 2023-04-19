@@ -4,3 +4,4 @@ pip install numpy==1.22.3 pandas==1.4.2 scikit-learn transformers==4.18.0 tokeni
 pip install torch torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 cd HappynJoy
 python my_prepocessing.py
+python Distill_knowledge.py --model_name teacher_epoch30/test_epoch29

@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 from torch.utils.data.dataloader import DataLoader
 
-from models.multimodal_cross_attention import *
+from models.mini_multimodal_cross_attention import *
 from my_merdataset import *
-from config import *
+from mini_config import *
 from utils import *
 import time
 
@@ -92,6 +92,13 @@ def parse_args():
         help='train audio encoder only'
     )
 
+    parser.add_argument(
+        '--teacher_data_path',
+        type=str,
+        default="distilled_knowledge.csv",
+        help="Distilled teacher's knowledge path"
+    )
+
     args = parser.parse_args()
     return args
 
@@ -105,7 +112,6 @@ if args.cuda != 'cuda:0':
 
 def train(model,optimizer, dataloader):
     start_time = time.time()
-
 
     print("Train start")
     model.train()
@@ -161,7 +167,7 @@ def main():
         np.random.seed(seed)
         random.seed(seed)
 
-        model = MultiModalForCrossAttention(audio_conf,text_conf,cross_attention_conf, args.text_only, args.audio_only)
+        model = mini_MultiModalForCrossAttention(audio_conf,text_conf,cross_attention_conf, args.text_only, args.audio_only)
 
         device = args.cuda
         print('---------------------',device)
