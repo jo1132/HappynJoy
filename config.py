@@ -29,7 +29,7 @@ multimodal_config = {
 
 train_config = {
     #'epochs': 30,
-    'epochs': 5,
+    'epochs': 30,
     'batch_size': 64,
     'lr': 5e-5,
     'accumulation_steps': 8,
@@ -60,21 +60,7 @@ cross_attention_config = {
     'res_dropout': 0,
     'embed_dropout': 0
 }
-mini_cross_attention_config = {
-    'projection_dim': 768,
-    'output_dim': 512,
-    'num_labels': 7,
-    'dropout': 0.1,
-    'cuda': 'cuda:0',
-    'num_heads': 8,
-    #mini
-    'layers': 1,
-    #'layers': 3,
-    'attn_dropout': 0,
-    'relu_dropout': 0,
-    'res_dropout': 0,
-    'embed_dropout': 0
-}
+
 
 test_config = {
     'batch_size': 64,

@@ -103,8 +103,9 @@ class TextEncoderForCrossAttention(nn.Module):
         #self.model = ElectraModel.from_pretrained("beomi/KcELECTRA-base")
         
         #my version
+        config = ElectraConfig(num_hidden_layers=6)
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
+        self.model = ElectraModel(config)
         
         # mini version
         #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
@@ -128,7 +129,7 @@ class TextEncoderForCrossAttention(nn.Module):
         return hidden_states
 
 
-class MultiModalForCrossAttention(nn.Module):
+class mini_MultiModalForCrossAttention(nn.Module):
     def __init__(self, audio_config, text_config, multi_modal_config, text_only, audio_only):
         super().__init__()
 
