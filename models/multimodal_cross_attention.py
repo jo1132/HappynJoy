@@ -146,12 +146,9 @@ class MultiModalForCrossAttention(nn.Module):
 
         if not self.text_only:
             self.audio_encoder = SpeechExtractorForCrossAttention(self.audio_args)
-            self.projection = nn.Conv1d(1024, self.args.projection_dim, kernel_size=1, padding=0, bias=False).to(self.args.cuda)
-            self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
         
         if not self.audio_only:
             self.text_encoder = TextEncoderForCrossAttention(self.text_args)
-            self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda) 
 
         self.num_heads = self.args.num_heads
         self.layers = self.args.layers
@@ -168,6 +165,12 @@ class MultiModalForCrossAttention(nn.Module):
             input_dim = self.args.projection_dim
         '''    
 
+        if not self.text_only:
+            self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
+        
+        if not self.audio_only:
+            self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda) 
+
         self.classifier = nn.Sequential(
             nn.Dropout(self.args.dropout),
             nn.Linear(input_dim, self.args.output_dim),
@@ -176,7 +179,7 @@ class MultiModalForCrossAttention(nn.Module):
             nn.Linear(self.args.output_dim, self.args.num_labels)
         ).to(self.args.cuda)
 
-        
+        self.projection = nn.Conv1d(1024, self.args.projection_dim, kernel_size=1, padding=0, bias=False).to(self.args.cuda)
         self.avgpool = nn.AdaptiveAvgPool1d(1)
         self.flatten = nn.Flatten()
 

@@ -161,7 +161,7 @@ def main():
         np.random.seed(seed)
         random.seed(seed)
 
-        model = MultiModalForCrossAttention(audio_conf,text_conf,cross_attention_conf, args.text_only, args.audio_only)
+        model = MultiModalForCrossAttention(audio_conf, text_conf, cross_attention_conf, args.text_only, args.audio_only)
 
         device = args.cuda
         print('---------------------',device)
