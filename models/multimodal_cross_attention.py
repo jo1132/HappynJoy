@@ -157,13 +157,13 @@ class MultiModalForCrossAttention(nn.Module):
         self.res_dropout = self.args.res_dropout
         self.embed_dropout = self.args.embed_dropout
 
-        input_dim = self.args.projection_dim * 2
-        '''
+        #input_dim = self.args.projection_dim * 2
+
         if not (self.text_only or self.audio_only):
             input_dim = self.args.projection_dim * 2
         else:
             input_dim = self.args.projection_dim
-        '''    
+        
 
         if not self.text_only:
             self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
