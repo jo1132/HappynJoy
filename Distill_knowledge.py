@@ -77,7 +77,9 @@ def main():
             json_data = json.load(file)
 
         for sess_key in json_data.keys():
+            print(sess_key)
             for script_key in json_data[sess_key].keys():
+                print(script_key)
                 for i in range(len(json_data[sess_key][script_key])):
                     if json_data[sess_key][script_key][i].get('knoledge_distillation', 1):
                         K = text_config['K']
@@ -86,8 +88,8 @@ def main():
                         json_data[sess_key][script_key][i]['dialogue'] = dialogue
                         output = model([json_data[sess_key][script_key][i]])
                         json_data[sess_key][script_key][i]['knoledge_distillation'] = output.tolist()
-                with open("data/test.json",'w') as j:
-                    json.dump(json_data,j,ensure_ascii=False, indent=4)
+            with open("data/processed_data.json",'w') as j:
+                json.dump(json_data,j,ensure_ascii=False, indent=4)
 
     else:
         print("You need to define specific model name to test")

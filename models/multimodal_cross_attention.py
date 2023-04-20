@@ -147,9 +147,11 @@ class MultiModalForCrossAttention(nn.Module):
         if not self.text_only:
             self.audio_encoder = SpeechExtractorForCrossAttention(self.audio_args)
             self.projection = nn.Conv1d(1024, self.args.projection_dim, kernel_size=1, padding=0, bias=False).to(self.args.cuda)
+            self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
         
         if not self.audio_only:
             self.text_encoder = TextEncoderForCrossAttention(self.text_args)
+            self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda) 
 
         self.num_heads = self.args.num_heads
         self.layers = self.args.layers
@@ -158,15 +160,13 @@ class MultiModalForCrossAttention(nn.Module):
         self.res_dropout = self.args.res_dropout
         self.embed_dropout = self.args.embed_dropout
 
+        input_dim = self.args.projection_dim * 2
+        '''
         if not (self.text_only or self.audio_only):
             input_dim = self.args.projection_dim * 2
         else:
             input_dim = self.args.projection_dim
-
-        if (not self.text_only) and (not self.audio_only):
-            self.text2audio_transformer = self.get_network(self_type='text2audio').to(self.args.cuda)
-            self.audio2text_transformer = self.get_network(self_type='audio2text').to(self.args.cuda)            
-            
+        '''    
 
         self.classifier = nn.Sequential(
             nn.Dropout(self.args.dropout),
@@ -221,18 +221,19 @@ class MultiModalForCrossAttention(nn.Module):
             x_text = text_out.transpose(1, 2)
             proj_text = x_text.permute(2, 0, 1)
             
+            '''
             x = proj_text.permute(1,2,0)
             x = self.avgpool(x)
             x = x.reshape(x.shape[0], -1)
             out = x
-            
-            #hidden_audio2text = self.audio2text_transformer(proj_text, proj_text, proj_text)
-            #hidden_text2audio = self.text2audio_transformer(proj_text, proj_audio, proj_audio)
-            #hidden_audio2text = hidden_audio2text.permute(1,2,0)
-            #hidden_audio2text = self.avgpool(hidden_audio2text)
-            #hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
-            #hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
-            #out = hidden_audio2text
+            '''
+
+            hidden_audio2text = self.audio2text_transformer(proj_text, proj_text, proj_text)
+            hidden_audio2text = hidden_audio2text.permute(1,2,0)
+            hidden_audio2text = self.avgpool(hidden_audio2text)
+            hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
+            hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
+            out = hidden_audio2text
             
 
         elif(self.audio_only):
@@ -240,16 +241,19 @@ class MultiModalForCrossAttention(nn.Module):
             audio_out = self._conv1d(audio_out)
             x_audio = audio_out.transpose(1, 2)
             proj_audio = x_audio.permute(2, 0, 1)
+
+            '''
             x = proj_audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
             out = x
-
+            '''
+            
             #hidden_audio2text = self.audio2text_transformer(proj_audio, proj_text, proj_text)
-            #hidden_text2audio = self.text2audio_transformer(proj_audio, proj_audio, proj_audio)
+            hidden_text2audio = self.text2audio_transformer(proj_audio, proj_audio, proj_audio)
             #hidden_audio2text = hidden_audio2text.permute(1,2,0)
             #hidden_audio2text = self.avgpool(hidden_audio2text)
             #hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
-            #hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
-            #out = hidden_text2audio
+            hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
+            out = hidden_text2audio
             
 
         else:

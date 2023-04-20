@@ -120,9 +120,9 @@ def train(model,optimizer, dataloader):
         batch_x, batch_y = batch[0], batch[1]
 
         outputs = model(batch_x)
-        print(batch_y[0])
-        print(outputs[0])
-        break
+        #print(batch_y[0])
+        #print(outputs[0])
+        #break
         loss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(torch.float32).to(train_config['cuda']))
         loss_list.append(loss.item())
         
