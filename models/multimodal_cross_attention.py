@@ -235,7 +235,7 @@ class MultiModalForCrossAttention(nn.Module):
             hidden_audio2text = hidden_audio2text.permute(1,2,0)
             hidden_audio2text = self.avgpool(hidden_audio2text)
             hidden_audio2text = hidden_audio2text.reshape(hidden_audio2text.shape[0], -1)
-            hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
+            #hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
             out = hidden_audio2text
             
 
