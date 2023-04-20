@@ -92,13 +92,6 @@ def parse_args():
         help='train audio encoder only'
     )
 
-    parser.add_argument(
-        '--teacher_data_path',
-        type=str,
-        default="distilled_knowledge.csv",
-        help="Distilled teacher's knowledge path"
-    )
-
     args = parser.parse_args()
     return args
 
@@ -125,20 +118,19 @@ def train(model,optimizer, dataloader):
     for batch_id, batch in enumerate(dataloader):
         batch_x, batch_y = batch[0], batch[1]
 
+        knowledge = torch.tensor([item['knoledge_distillation'][0] for item in batch_x])
+
         outputs = model(batch_x)
 
-        print(batch_x[0])
-        print(batch_y[0])
-        print(outputs)
-        break
-
-        loss = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(torch.float32).to(train_config['cuda']))
-        loss_list.append(loss.item())
+        loss1 = loss_func(outputs.to(torch.float32).to(train_config['cuda']), batch_y.to(torch.float32).to(train_config['cuda']))
+        loss2 = loss_func(outputs.to(torch.float32).to(train_config['cuda']), knowledge.to(torch.float32).to(train_config['cuda']))
+        total_loss = loss1 + loss2
+        loss_list.append(total_loss.item())
         
-        tqdm_train.set_description('loss is {:.2f}'.format(loss.item()))
+        tqdm_train.set_description('loss is {:.2f}'.format(total_loss.item()))
         tqdm_train.update()
-        loss = loss / accumulation_steps
-        loss.backward()
+        total_loss = total_loss / accumulation_steps
+        total_loss.backward()
         if batch_id % accumulation_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
