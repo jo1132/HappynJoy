@@ -127,7 +127,7 @@ class TextEncoderForCrossAttention(nn.Module):
         inputs = {k:v.to(self.args.cuda) for k,v in inputs.items()}
 
         with torch.no_grad():
-            self.model.eval()
+            #self.model.eval()
             hidden_states = self.model(**inputs).last_hidden_state
 
         return hidden_states
@@ -157,7 +157,7 @@ class MultiModalForCrossAttention(nn.Module):
         self.res_dropout = self.args.res_dropout
         self.embed_dropout = self.args.embed_dropout
 
-        #input_dim = self.args.projection_dim * 2
+        input_dim = self.args.projection_dim * 2
 
         if not (self.text_only or self.audio_only):
             input_dim = self.args.projection_dim * 2
