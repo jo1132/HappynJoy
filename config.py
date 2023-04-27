@@ -1,3 +1,10 @@
+dataset_config = {
+    'train_size' : 0.8,
+    'test_size' : 0.2,
+    'shuffle' : True,
+    'random_state' : 123,
+}
+    
 audio_config = {
     'K': 1,
     'output_dim': 256,
@@ -15,7 +22,7 @@ text_config = {
     'num_label': 7,
     'max_length': 128,
     'cuda': 'cuda:0',
-    'freeze': True
+    'freeze': False
 }
 
 multimodal_config = {
@@ -28,22 +35,19 @@ multimodal_config = {
 }
 
 train_config = {
+    'epochs': 1,
     #'epochs': 30,
-    'epochs': 30,
     'batch_size': 64,
     'lr': 5e-5,
     'accumulation_steps': 8,
     'cuda': 'cuda:0'
 }
 
-mixer_config = {
-    'projection_dim' : 256,
-    'output_dim' : 512,
-    'num_blocks' : 1,
-    'dropout' : 0.1,
-    'num_labels' : 7,
-    'cuda' : 'cuda:0'
+test_config = {
+    'batch_size': 64,
+    'cuda': 'cuda:0'
 }
+
 
 cross_attention_config = {
     'projection_dim': 768,
@@ -62,7 +66,3 @@ cross_attention_config = {
 }
 
 
-test_config = {
-    'batch_size': 64,
-    'cuda': 'cuda:0'
-}

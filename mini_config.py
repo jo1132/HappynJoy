@@ -15,7 +15,7 @@ text_config = {
     'num_label': 7,
     'max_length': 128,
     'cuda': 'cuda:0',
-    'freeze': True
+    'freeze': False
 }
 
 multimodal_config = {

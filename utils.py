@@ -10,7 +10,11 @@ def save_dict_to_json(d, json_path):
         json_path: (string) path to json file
     """
     with open(json_path, 'w') as f:
-        d = {k: float(v) for k, v in d.items()}
+        for k, v in d.items():
+            if v == str:
+                d[k] = v
+            else: #v == num
+                d[k] = float(v)
         json.dump(d, f, indent=4)
 
 
@@ -40,3 +44,4 @@ def get_params(model):
     params = sum([np.prod(p.size()) for p in model_parameters])
 
     print(f"# of trainable parameters: {params}")
+    return params

@@ -22,25 +22,27 @@ class SpeechExtractorForCrossAttention():
         #self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
         # vanila
         self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=12)
-        self.encoder = Wav2Vec2Model.from_pretrainedwav2vec_config
+        self.encoder = Wav2Vec2Model(self.wav2vec_config)
         #mini
         #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6)
         #self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
         #self.encoder = Wav2Vec2Model(self.wav2vec_config)
 
-        if 'hidden_states' not in os.listdir(self.args.path):
-            print("Wav Embedding Save")
-            os.mkdir(self.args.path + 'hidden_states')
-            embed_path = self.args.path + 'hidden_states/'
-            self.encoder.to(self.args.cuda)
-            len_ = len(os.listdir(self.args.path))
-            # if 'hidden_state.json' not in embed_files or 'extract_feature.json' not in embed_files:
-            self.encoder.eval()
-            with torch.no_grad():
-                for idx, i in enumerate(os.listdir(self.args.path)):
-                    print('{}/{}'.format(idx + 1, len_))
-                    if os.path.splitext(i)[-1] == '.wav':
-                        '''
+        #if 'hidden_states' not in os.listdir(self.args.path):
+        print("Wav Embedding Save")
+        os.makedirs(self.args.path + 'hidden_states', exist_ok=True)
+        embed_path = self.args.path + 'hidden_states/'
+        self.encoder.to(self.args.cuda)
+        len_ = len(os.listdir(self.args.path))
+        # if 'hidden_state.json' not in embed_files or 'extract_feature.json' not in embed_files:
+        #self.encoder.eval()
+        with torch.no_grad():
+            hidden_states = os.listdir(os.path.join(self.args.path, "hidden_states"))
+            for idx, i in enumerate(os.listdir(self.args.path)):
+                print('{}/{}'.format(idx + 1, len_))
+                name, ext = os.path.splitext(i)
+                if ext == '.wav' and (name+'.pt' not in hidden_states):
+                    '''
                         for j in tqdm(os.listdir(self.args.path)):
                             if os.path.splitext(j)[-1] == '.wav':
                                 wav = self.readfile(j)
@@ -48,12 +50,13 @@ class SpeechExtractorForCrossAttention():
                                 pooled_hidden = encoded.last_hidden_state
                                 torch.save(pooled_hidden, embed_path + j[:-4] + '.pt')
                                 torch.cuda.empty_cache()
-                        '''
-                        wav = self.readfile(i)
-                        encoded = self._encoding(wav, output_hidden_state=False)
-                        pooled_hidden = encoded.last_hidden_state
-                        torch.save(pooled_hidden, embed_path + i[:-4] + '.pt')
-                        torch.cuda.empty_cache()
+                    '''
+                    wav = self.readfile(i)
+                    encoded = self._encoding(wav, output_hidden_state=False)
+                    pooled_hidden = encoded.last_hidden_state
+                    print(name)
+                    torch.save(pooled_hidden, embed_path + i[:-4] + '.pt')
+                    torch.cuda.empty_cache()
 
             print("Wav Embedding Save finished")
 

@@ -1,37 +1,41 @@
+import os
 import json
 from collections import Counter
 from torch.utils.data import Dataset
+from sklearn.model_selection import train_test_split
+from config import *
 
 
 class MERGEDataset(Dataset):
     def __init__(self,data_option='train',path='./'):
-        with open(path+'processed_data.json','r') as file:
+        if data_option == 'train':
+            path = os.path.join(path, 'train_preprocessed_data.json')
+        elif data_option == 'test':
+            path = os.path.join(path, 'test_preprocessed_data.json')
+
+        with open(path,'r') as file:
             data = json.load(file)
             
-        train = list(range(1,33))
-        test = list(range(33,41))
+        self.train, self.test= train_test_split(data['data'], train_size=dataset_config['train_size'], test_size=dataset_config['test_size'], random_state=dataset_config['random_state'], shuffle=dataset_config['shuffle']) 
         #train = [1, 2, 3]
         #test = [3]
-        self.emo_map = {'neutral': 0,
-         'happy': 1,
-         'surprise':2,
-         'angry': 3,
-         'sad':4,
-         'disgust': 5,
-         'fear': 6}
-        script = data['Sess01'].keys()
+        self.emo_map = {
+            'neutral': 0,
+            'happy': 1,
+            'surprise':2,
+            'angry': 3,
+            'sad':4,
+            'disgust': 5,
+            'fear': 6
+            }
 
         self.data = []
         if data_option == 'train':
-            r = train
-
+            dataset = self.train
         elif data_option == 'test':
-            r = test
+            dataset = self.test
 
-        for sess in r:
-            session = 'Sess'+'{0:0>2}'.format(sess)
-            for s in data[session].keys():
-                self.data.extend(data[session][s])
+        self.data = dataset
 
         for idx,data in enumerate(self.data):
             emo_list = [0]*7
@@ -50,8 +54,8 @@ class MERGEDataset(Dataset):
     def prepare_text_data(self,text_config):
         K = text_config.K
         for idx,data in enumerate(self.data):
-            dialogue = [data['utterance']]+data['history'][:K-1]
-            dialogue = '[SEP]'.join(dialogue)
+            dialogue = [data['utterance']]#+data['history'][:K-1]
+            #dialogue = '[SEP]'.join(dialogue)
             self.data[idx]['dialogue'] = dialogue
 
     def get_weight(self):

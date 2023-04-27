@@ -30,7 +30,7 @@ class SpeechExtractorForCrossAttention():
             self.encoder.to(self.args.cuda)
             len_ = len(os.listdir(self.args.path))
             # if 'hidden_state.json' not in embed_files or 'extract_feature.json' not in embed_files:
-            self.encoder.eval()
+            #self.encoder.eval()
             with torch.no_grad():
                 for idx, i in enumerate(os.listdir(self.args.path)):
                     print('{}/{}'.format(idx + 1, len_))

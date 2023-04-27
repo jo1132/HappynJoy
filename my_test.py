@@ -115,8 +115,10 @@ def test(model, test_dataset):
         
     end_time = time.time()
     
-    print("enference time : ", end_time-start_time)
-    return losses, acc, recall, precision, f1, confusion, std
+    params = get_params(model)
+    inference_time = end_time-start_time
+    print("inference time : ", inference_time, 'params : ', params)
+    return losses, acc, recall, precision, f1, confusion, std, params, inference_time
 
 
 def main():
@@ -127,8 +129,16 @@ def main():
         test_data.prepare_text_data(text_conf)
 
         model = torch.load('./ckpt/{}.pt'.format(args.model_name))
-        loss, acc, recall, precision, f1, confusion, std = test(model, test_data)
-        result = {'loss':loss, 'acc': acc, 'recall': recall, 'precision': precision, 'f1': f1}
+        loss, acc, recall, precision, f1, confusion, std, params, inference_time = test(model, test_data)
+        result = {
+            'loss':loss, 
+            'acc': acc, 
+            'recall': recall, 
+            'precision': precision, 
+            'f1': f1,
+            'std': std,
+            'params' : params, 
+            'inference_time' : inference_time}
         print(len(confusion))
         print(confusion)
         print("Saving your test result")
@@ -148,15 +158,17 @@ def main():
         for name in model_names:
 
             model = torch.load('./ckpt/{}'.format(name))
-            loss, acc, recall, precision, f1, confusion,std = test(model, test_data)
+            loss, acc, recall, precision, f1, confusion, std, params, inference_time = test(model, test_data)
 
-            result = {'model_name':name,
-                      'loss': loss,
-                      'acc': acc,
-                      'recall': recall,
-                      'precision': precision,
-                      'f1': f1,
-                      'std':std}
+            result = {
+                'loss':loss, 
+                'acc': acc, 
+                'recall': recall, 
+                'precision': precision, 
+                'f1': f1,
+                'std': std,
+                'params' : params, 
+                'inference_time' : inference_time}
             df.append(result)
 
         print("Saving your test result")
