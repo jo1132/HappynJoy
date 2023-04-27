@@ -37,11 +37,10 @@ class SpeechExtractorForCrossAttention():
         # if 'hidden_state.json' not in embed_files or 'extract_feature.json' not in embed_files:
         #self.encoder.eval()
         with torch.no_grad():
-            hidden_states = os.listdir(os.path.join(self.args.path, "hidden_states"))
             for idx, i in enumerate(os.listdir(self.args.path)):
                 print('{}/{}'.format(idx + 1, len_))
                 name, ext = os.path.splitext(i)
-                if ext == '.wav' and (name+'.pt' not in hidden_states):
+                if ext == '.wav' and not (os.path.isfile(embed_path+name+'.pt')):
                     '''
                         for j in tqdm(os.listdir(self.args.path)):
                             if os.path.splitext(j)[-1] == '.wav':
@@ -82,11 +81,11 @@ class SpeechExtractorForCrossAttention():
     def __call__(self,batch):
 
         hidden_batch = torch.Tensor().to(self.args.cuda)
-        file_name = [data['file_name']+'.pt' for data in batch]
+        file_name = list(map(lambda x : os.path.splitext(x['wav'])[0]+'.pt'), batch)
 
         for data in file_name:
 
-            hidden = torch.load(self.file_path+'hidden_states/'+'wav_'+data,map_location=self.args.cuda)
+            hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
             #print(hidden.size())
             seq = hidden.size()[1]
             if seq > self.max_len:
@@ -125,6 +124,7 @@ class TextEncoderForCrossAttention(nn.Module):
 
     def forward(self,batch):
         data = [d['dialogue'] for d in batch]
+        print(data)
         inputs = self.tokenizer(data,max_length=self.args.max_length,padding='max_length',return_tensors='pt',
                                 truncation=True)
         inputs = {k:v.to(self.args.cuda) for k,v in inputs.items()}

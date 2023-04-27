@@ -18,6 +18,8 @@ def read_file(file_name):
 def encoding(raw_wavs,cuda, processor=None, encoder=None, return_hidden_state=False):
     assert bool(processor) == bool(encoder)
 
+    # Audio reshape
+    raw_wavs = raw_wavs.reshape((1,-1)).squeeze()
     inputs = processor(raw_wavs,
                        sampling_rate=16000,
                        return_attention_mask=True,

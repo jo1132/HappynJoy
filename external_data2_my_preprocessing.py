@@ -16,7 +16,6 @@ def GenerateSubDir(PATH, COPYPATH):
             elif(ext == ".wav"):
                 audio = mp.AudioFileClip(cur_path)
                 audio.write_audiofile(COPYPATH)
-                print(COPYPATH, audio.to_soundarray())
 
         
     # 재귀적으로 파일 탐색(현재 경로, 복사할 경로, 파일의 태그(종류, wav, EDA ....))

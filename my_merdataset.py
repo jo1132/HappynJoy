@@ -54,7 +54,7 @@ class MERGEDataset(Dataset):
     def prepare_text_data(self,text_config):
         K = text_config.K
         for idx,data in enumerate(self.data):
-            dialogue = [data['utterance']]#+data['history'][:K-1]
+            dialogue = data['utterance']#+data['history'][:K-1]
             #dialogue = '[SEP]'.join(dialogue)
             self.data[idx]['dialogue'] = dialogue
 
