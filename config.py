@@ -35,7 +35,7 @@ multimodal_config = {
 }
 
 train_config = {
-    'epochs': 1,
+    'epochs': 30,
     #'epochs': 30,
     'batch_size': 64,
     'lr': 5e-5,

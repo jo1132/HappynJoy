@@ -19,7 +19,7 @@ class SpeechExtractorForCrossAttention():
         #self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
 
         #mini
-        self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6)
+        self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6, hidden_size=1024, output_hidden_size=1024)
         self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
         self.encoder = Wav2Vec2Model(self.wav2vec_config)
 

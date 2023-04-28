@@ -17,15 +17,17 @@ class SpeechExtractorForCrossAttention():
         self.max_len = self.args.max_length
 
         
-        self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
+        #self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
         # pretrained
         #self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
+        #print(self.encoder.config)
         # vanila
-        self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=12)
-        self.encoder = Wav2Vec2Model(self.wav2vec_config)
+        #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=12, hidden_size=1024, output_hidden_size=1024)
+        #self.encoder = Wav2Vec2Model(self.wav2vec_config)
         #mini
         #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6)
-        #self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+        self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+        self.encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
         #self.encoder = Wav2Vec2Model(self.wav2vec_config)
 
         #if 'hidden_states' not in os.listdir(self.args.path):
@@ -59,7 +61,7 @@ class SpeechExtractorForCrossAttention():
 
             print("Wav Embedding Save finished")
 
-            del self.encoder
+        del self.encoder
 
     def readfile(self,file_name):
         if file_name[0] in ['M', 'F']:
@@ -81,19 +83,20 @@ class SpeechExtractorForCrossAttention():
     def __call__(self,batch):
 
         hidden_batch = torch.Tensor().to(self.args.cuda)
-        file_name = list(map(lambda x : os.path.splitext(x['wav'])[0]+'.pt'), batch)
+        file_name = [data['wav'][:-4]+'.pt' for data in batch]
 
         for data in file_name:
-
             hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
-            #print(hidden.size())
+            print(hidden.size())
             seq = hidden.size()[1]
             if seq > self.max_len:
                 # truncation
                 hidden = hidden[:,:self.max_len,:].to(self.args.cuda)
             elif seq < self.max_len:
+                
                 # padding
                 pad = torch.Tensor([[[0]*1024]*(self.max_len-seq)]).to(self.args.cuda)
+                print(pad.shape, hidden.shape)
                 hidden = torch.cat([hidden,pad], dim=1)
 
             hidden_batch = torch.cat([hidden_batch,hidden],dim=0)
@@ -107,11 +110,12 @@ class TextEncoderForCrossAttention(nn.Module):
         self.args = config
 
         # pre trained
-        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        #self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        config = ElectraConfig(num_hidden_layers=12, embedding_size=768, hidden_size=768, num_attention_heads=12, vocab_size=35000, intermediate_size=3072)
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        self.model = ElectraModel(config)
+        self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
+        #print(self.model.config)
+        #config = ElectraConfig(num_hidden_layers=12, embedding_size=768, hidden_size=768, num_attention_heads=12, vocab_size=35000, intermediate_size=3072)
+        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
+        #self.model = ElectraModel(config)
         #mini version
         #config = ElectraConfig(num_hidden_layers=6)
         #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
