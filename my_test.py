@@ -161,6 +161,7 @@ def main():
             loss, acc, recall, precision, f1, confusion, std, params, inference_time = test(model, test_data)
 
             result = {
+                'name' : name,
                 'loss':loss, 
                 'acc': acc, 
                 'recall': recall, 

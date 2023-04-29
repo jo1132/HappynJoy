@@ -16,18 +16,17 @@ class SpeechExtractorForCrossAttention():
         self.file_path = self.args.path
         self.max_len = self.args.max_length
 
-        
-        #self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
         # pretrained
-        #self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
+        self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
+        self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
         #print(self.encoder.config)
         # vanila
-        #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=12, hidden_size=1024, output_hidden_size=1024)
+        #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=12, hidden_size=768, output_hidden_size=1024)
         #self.encoder = Wav2Vec2Model(self.wav2vec_config)
         #mini
         #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6)
-        self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
-        self.encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
+        #self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+        #self.encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
         #self.encoder = Wav2Vec2Model(self.wav2vec_config)
 
         #if 'hidden_states' not in os.listdir(self.args.path):
@@ -42,6 +41,7 @@ class SpeechExtractorForCrossAttention():
             for idx, i in enumerate(os.listdir(self.args.path)):
                 print('{}/{}'.format(idx + 1, len_))
                 name, ext = os.path.splitext(i)
+                print(embed_path)
                 if ext == '.wav' and not (os.path.isfile(embed_path+name+'.pt')):
                     '''
                         for j in tqdm(os.listdir(self.args.path)):
@@ -55,7 +55,6 @@ class SpeechExtractorForCrossAttention():
                     wav = self.readfile(i)
                     encoded = self._encoding(wav, output_hidden_state=False)
                     pooled_hidden = encoded.last_hidden_state
-                    print(name)
                     torch.save(pooled_hidden, embed_path + i[:-4] + '.pt')
                     torch.cuda.empty_cache()
 
@@ -87,7 +86,7 @@ class SpeechExtractorForCrossAttention():
 
         for data in file_name:
             hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
-            print(hidden.size())
+            print(data,hidden.size())
             seq = hidden.size()[1]
             if seq > self.max_len:
                 # truncation
@@ -98,8 +97,10 @@ class SpeechExtractorForCrossAttention():
                 pad = torch.Tensor([[[0]*1024]*(self.max_len-seq)]).to(self.args.cuda)
                 print(pad.shape, hidden.shape)
                 hidden = torch.cat([hidden,pad], dim=1)
-
-            hidden_batch = torch.cat([hidden_batch,hidden],dim=0)
+            try:
+                hidden_batch = torch.cat([hidden_batch,hidden],dim=0)
+            except:
+                continue
         #print(hidden_batch.size())
         return hidden_batch
 

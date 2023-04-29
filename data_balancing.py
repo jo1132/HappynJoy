@@ -64,6 +64,23 @@ while(Middle_data['data']):
 print("각 감정당 최대" + str(max_emotion) + "개 추출")
 print(emo_count)
 
+
+# Dateaset extract folder
+import shutil
+import os
+
+PATH = './TOTAL'
+COPYPATH = os.path.join(PATH, 'Extracted_Dataset')
+os.makedirs(COPYPATH, exist_ok=True)
+for idx, item in enumerate(Final_data['data']):
+    cur_path = os.path.join(PATH, item['wav'])
+    destination = os.path.join(COPYPATH, item['wav'])
+    try:
+        shutil.copy(cur_path, destination)
+    except:
+        print(cur_path)
+        del Final_data['data'][idx]
+
 print("데이터 저장")
 # save preprocessed data
 json_path = os.path.join(PATH, 'data', 'preprocessed_data.json')

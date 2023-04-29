@@ -10,7 +10,7 @@ audio_config = {
     'output_dim': 256,
     'use': 'hidden_state',
     'num_label': 7,
-    'path': './',
+    'path': './Extracted_Dataset',
     'cuda': 'cuda:0',
     # about 10s of wav files
     'max_length' : 512

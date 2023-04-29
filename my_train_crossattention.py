@@ -150,7 +150,7 @@ def main():
     print(cross_attention_conf)
     print(train_config)
 
-    audio_conf['path'] = './TOTAL/'
+    audio_conf['path'] = './TOTAL/Extracted_Dataset/'
 
     if args.is_training == True:
         dataset = MERGEDataset(data_option='train', path='./data/')
