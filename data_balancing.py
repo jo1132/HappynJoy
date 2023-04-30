@@ -17,8 +17,12 @@ Middle_data = {"data": []}
 Final_data = {"data" : []}
 emo_count = {}
 
+
 # 같은 값을 가진 감정 중, 전체 라벨 수가 적은 감정을 우선적으로 사용한다.
-for item in base_json['data']:
+for idx, item in enumerate(base_json['data']):
+    if not (os.path.isfile(os.path.join('/root/TOTAL',  item['wav']))):
+        del base_json['data'][idx]
+        continue
     emo_dic = {}
     elem_list = []
     for emo in item['Emotion']:

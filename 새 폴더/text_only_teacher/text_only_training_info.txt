@@ -1,8 +1,0 @@
-text_only_teacher
-number of parameter = 43714055
-training_time = 
-
-Second try text_only_teacher (No audio encoder)
-number of parameter = 397319
-inference_time = 12.525758743286133
-acc = 90.9

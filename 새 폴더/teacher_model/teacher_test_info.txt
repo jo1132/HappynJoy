@@ -1,4 +1,0 @@
-multimodal Teacher
-
-acc : 91.908
-inference time :  176.63845682144165
