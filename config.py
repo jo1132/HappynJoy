@@ -10,7 +10,7 @@ audio_config = {
     'output_dim': 256,
     'use': 'hidden_state',
     'num_label': 7,
-    'path': './Extracted_Dataset',
+    'path': './TOTAL/',
     'cuda': 'cuda:0',
     # about 10s of wav files
     'max_length' : 512
@@ -35,9 +35,9 @@ multimodal_config = {
 }
 
 train_config = {
-    'epochs': 30,
-    #'epochs': 30,
-    'batch_size': 64,
+    #'epochs': 1,
+    'epochs': 50,
+    'batch_size': 32,
     'lr': 5e-5,
     'accumulation_steps': 8,
     'cuda': 'cuda:0'

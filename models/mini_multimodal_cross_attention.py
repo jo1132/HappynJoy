@@ -19,7 +19,7 @@ class SpeechExtractorForCrossAttention():
         #self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
 
         #mini
-        self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6, hidden_size=1024, output_hidden_size=1024)
+        self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6, hidden_size=1024, output_hidden_size=1024, num_attention_heads=16)
         self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
         self.encoder = Wav2Vec2Model(self.wav2vec_config)
 
@@ -72,25 +72,25 @@ class SpeechExtractorForCrossAttention():
         return extract_feature
 
     def __call__(self,batch):
-
         hidden_batch = torch.Tensor().to(self.args.cuda)
-        file_name = [data['file_name']+'.pt' for data in batch]
+        file_name = [data['wav'][:-4]+'.pt' for data in batch]
 
         for data in file_name:
-
-            hidden = torch.load(self.file_path+'hidden_states/'+'wav_'+data,map_location=self.args.cuda)
-            #print(hidden.size())
+            # 미리 인코딩한 데이터셋 
+            hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
             seq = hidden.size()[1]
             if seq > self.max_len:
                 # truncation
                 hidden = hidden[:,:self.max_len,:].to(self.args.cuda)
             elif seq < self.max_len:
+                
                 # padding
                 pad = torch.Tensor([[[0]*1024]*(self.max_len-seq)]).to(self.args.cuda)
                 hidden = torch.cat([hidden,pad], dim=1)
-
-            hidden_batch = torch.cat([hidden_batch,hidden],dim=0)
-        #print(hidden_batch.size())
+            try:
+                hidden_batch = torch.cat([hidden_batch,hidden],dim=0)
+            except:
+                continue
         return hidden_batch
 
 
@@ -107,10 +107,7 @@ class TextEncoderForCrossAttention(nn.Module):
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
         #print(ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator").config)
         self.model = ElectraModel(config)
-        
-        # mini version
-        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        #self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
+ 
 
         self.model.to(self.args.cuda)
 

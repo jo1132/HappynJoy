@@ -19,16 +19,9 @@ class SpeechExtractorForCrossAttention():
         # pretrained
         self.processor = Wav2Vec2Processor.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
         self.encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
-        #print(self.encoder.config)
-        # vanila
-        #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=12, hidden_size=768, output_hidden_size=1024)
-        #self.encoder = Wav2Vec2Model(self.wav2vec_config)
-        #mini
-        #self.wav2vec_config = Wav2Vec2Config(num_hidden_layers=6)
-        #self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
-        #self.encoder = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
-        #self.encoder = Wav2Vec2Model(self.wav2vec_config)
-
+  
+        # 음성파일데이터를 모두 미리 인코딩하여 데이터셋 생성
+        # 한번 인코딩해두면, 이후 재 학습할 때 빠르게 학습할 수 
         #if 'hidden_states' not in os.listdir(self.args.path):
         print("Wav Embedding Save")
         os.makedirs(self.args.path + 'hidden_states', exist_ok=True)
@@ -41,7 +34,6 @@ class SpeechExtractorForCrossAttention():
             for idx, i in enumerate(os.listdir(self.args.path)):
                 print('{}/{}'.format(idx + 1, len_))
                 name, ext = os.path.splitext(i)
-                print(embed_path)
                 if ext == '.wav' and not (os.path.isfile(embed_path+name+'.pt')):
                     '''
                         for j in tqdm(os.listdir(self.args.path)):
@@ -52,6 +44,7 @@ class SpeechExtractorForCrossAttention():
                                 torch.save(pooled_hidden, embed_path + j[:-4] + '.pt')
                                 torch.cuda.empty_cache()
                     '''
+                    print(i)
                     wav = self.readfile(i)
                     encoded = self._encoding(wav, output_hidden_state=False)
                     pooled_hidden = encoded.last_hidden_state
@@ -59,7 +52,7 @@ class SpeechExtractorForCrossAttention():
                     torch.cuda.empty_cache()
 
             print("Wav Embedding Save finished")
-
+        # 인코딩이 끝나면 인코더 삭제
         del self.encoder
 
     def readfile(self,file_name):
@@ -80,13 +73,12 @@ class SpeechExtractorForCrossAttention():
         return extract_feature
 
     def __call__(self,batch):
-
         hidden_batch = torch.Tensor().to(self.args.cuda)
         file_name = [data['wav'][:-4]+'.pt' for data in batch]
 
         for data in file_name:
+            # 미리 인코딩한 데이터셋 
             hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
-            print(data,hidden.size())
             seq = hidden.size()[1]
             if seq > self.max_len:
                 # truncation
@@ -95,13 +87,11 @@ class SpeechExtractorForCrossAttention():
                 
                 # padding
                 pad = torch.Tensor([[[0]*1024]*(self.max_len-seq)]).to(self.args.cuda)
-                print(pad.shape, hidden.shape)
                 hidden = torch.cat([hidden,pad], dim=1)
             try:
                 hidden_batch = torch.cat([hidden_batch,hidden],dim=0)
             except:
                 continue
-        #print(hidden_batch.size())
         return hidden_batch
 
 
@@ -113,14 +103,6 @@ class TextEncoderForCrossAttention(nn.Module):
         # pre trained
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
         self.model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        #print(self.model.config)
-        #config = ElectraConfig(num_hidden_layers=12, embedding_size=768, hidden_size=768, num_attention_heads=12, vocab_size=35000, intermediate_size=3072)
-        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        #self.model = ElectraModel(config)
-        #mini version
-        #config = ElectraConfig(num_hidden_layers=6)
-        #self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-        #self.model = ElectraModel(config)
 
         self.model.to(self.args.cuda)
 
@@ -129,7 +111,6 @@ class TextEncoderForCrossAttention(nn.Module):
 
     def forward(self,batch):
         data = [d['dialogue'] for d in batch]
-        print(data)
         inputs = self.tokenizer(data,max_length=self.args.max_length,padding='max_length',return_tensors='pt',
                                 truncation=True)
         inputs = {k:v.to(self.args.cuda) for k,v in inputs.items()}
@@ -152,6 +133,7 @@ class MultiModalForCrossAttention(nn.Module):
         self.text_args = text_config
         self.args = multi_modal_config
 
+        # 텍스트 및 음성 인코더 
         if not self.text_only:
             self.audio_encoder = SpeechExtractorForCrossAttention(self.audio_args)
         
@@ -227,6 +209,7 @@ class MultiModalForCrossAttention(nn.Module):
         """
         text, audio should have dimension [batch_size, seq_len, n_features]
         """
+        # 텍스트 데이터만 사용하는 텍스트 교사 모델 훈련시 forward
         if(self.text_only):
             text_out = self.text_encoder(batch)
             x_text = text_out.transpose(1, 2)
@@ -246,7 +229,7 @@ class MultiModalForCrossAttention(nn.Module):
             #hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
             out = hidden_audio2text
             
-
+        # 음성 데이터만 사용하는 음성 교사 모델 훈련시 forward
         elif(self.audio_only):
             audio_out = self.audio_encoder(batch)
             audio_out = self._conv1d(audio_out)
@@ -266,7 +249,7 @@ class MultiModalForCrossAttention(nn.Module):
             hidden_text2audio = hidden_text2audio.permute(1,0,2)[:,0,:]   # take <s> token (equiv. to [CLS])   # batch, 768
             out = hidden_text2audio
             
-
+        # 멀티모달 데이터를 사용하는 멀티모달 교사 데이터 훈련시 forward
         else:
             text_out = self.text_encoder(batch)
             x_text = text_out.transpose(1, 2)

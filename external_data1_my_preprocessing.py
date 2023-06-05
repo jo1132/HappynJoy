@@ -64,7 +64,7 @@ def Read_DataFrames(COPYPATH, file_name):
         df.columns = ['file_name', 'wav', 'utterance', 'Emotion']
         return df
 
-os.chdir("/root/")
+#os.chdir("/root/")
 #if __name__ == '__main__':
 # Move All files to one directory
 PATH = './'

@@ -29,9 +29,10 @@ multimodal_config = {
 
 train_config = {
     #'epochs': 30,
-    'epochs': 30,
+    'epochs': 50,
     'batch_size': 64,
     'lr': 5e-5,
+    'alpha': 0.1,
     'accumulation_steps': 8,
     'cuda': 'cuda:0'
 }

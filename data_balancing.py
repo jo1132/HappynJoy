@@ -5,104 +5,69 @@ import random
 from sklearn.model_selection import train_test_split
 
 PATH = './'
-max_one_emotion = 4000
+max_one_emotion = 30000
 max_emotion = 6000
 nclass = 7
 
+# 파일 읽기
 json_path = os.path.join(PATH, 'data', 'total_data.json')
 with open(json_path,'r') as file:
     base_json = json.load(file)
 
-Middle_data = {"data": []}
+# 감정 클래스 분포 확인
 Final_data = {"data" : []}
 emo_count = {}
+del_list = []
 
-
-# 같은 값을 가진 감정 중, 전체 라벨 수가 적은 감정을 우선적으로 사용한다.
+# 라벨 파일 존재여부 확인 및 파일이 없다면 라벨 삭제
+# 감정 데이터 개수 제어
 for idx, item in enumerate(base_json['data']):
-    if not (os.path.isfile(os.path.join('/root/TOTAL',  item['wav']))):
-        del base_json['data'][idx]
+    if not (os.path.isfile(os.path.join(PATH, 'TOTAL',  item['wav']))):
+        del_list.append(idx)
         continue
-    emo_dic = {}
-    elem_list = []
+    
     for emo in item['Emotion']:
-        emo_dic[emo] = emo_dic.get(emo, 0) + 1
-    for k, v in emo_dic.items():
-        elem_list.append([v, k])
-    elem_list.sort()
-    top_emo = elem_list.pop()
-    item['label'] = top_emo[1]
-    if elem_list:
-        if(top_emo[0] == elem_list[-1][0]):
-            while(elem_list and top_emo[0] == elem_list[-1][0]):
-                if (top_emo[1] in ['neutral', 'angry', 'sad']):
-                    top_emo = elem_list.pop()
-                else:
-                    item['label'] = top_emo[1]
-                    break
-        Middle_data['data'].append(item)
-    else:
-        emo_count[top_emo[1]] = emo_count.get(top_emo[1], 0)
-        if (emo_count[top_emo[1]] <= max_one_emotion): # 단독 감정을 가진 값이 너무 많이 포함되지 않게 한다.
-            Final_data['data'].append(item)
-            emo_count[top_emo[1]] += 1
+        if emo_count.get(emo, 0) >= max_one_emotion:
+            del_list.append(idx)
+            break
         else:
-            Middle_data['data'].append(item)
+            emo_count[emo] = emo_count.get(emo, 0) + 1
+
+while (del_list):
+    idx = del_list.pop()
+    item = base_json['data'][idx]
+
+    print('파일없음 삭제 :', os.path.join(PATH, 'TOTAL',  item['wav']))
+    del base_json['data'][idx]
     
-print("단독 감정 데이터 추출")
+print("감정 클래스 분포 확인")
 print(emo_count)
 
-# Get Emotion Randomly
-random.shuffle(Middle_data['data'])
-while(Middle_data['data']):
-    item = Middle_data['data'].pop()
-
-    if (emo_count[item['label']] < max_emotion):
-        Final_data['data'].append(item)
-        emo_count[item['label']] += 1
-    
-    if (sum(list(emo_count.values())) >= max_emotion*nclass):
-        print(max_emotion, nclass)
-        break
-
-print("각 감정당 최대" + str(max_emotion) + "개 추출")
-print(emo_count)
+# 감정 데이터 셔플
+random.shuffle(base_json['data'])
 
 
-# Dateaset extract folder
-import shutil
-import os
-
-PATH = './TOTAL'
-COPYPATH = os.path.join(PATH, 'Extracted_Dataset')
-os.makedirs(COPYPATH, exist_ok=True)
-for idx, item in enumerate(Final_data['data']):
-    cur_path = os.path.join(PATH, item['wav'])
-    destination = os.path.join(COPYPATH, item['wav'])
-    try:
-        shutil.copy(cur_path, destination)
-    except:
-        print(cur_path)
-        del Final_data['data'][idx]
 
 print("데이터 저장")
 # save preprocessed data
 json_path = os.path.join(PATH, 'data', 'preprocessed_data.json')
 with open(json_path,'w') as j:
-    json.dump(Final_data,j,ensure_ascii=False, indent=4)
+    json.dump(base_json,j,ensure_ascii=False, indent=4)
 
 
-# Train Test Split
-train_data, test_data = train_test_split(Final_data['data'], train_size=0.8, test_size=0.2, random_state=123, shuffle=True)
+# 훈련, 테스트 데이터 split
+train_data, test_data = train_test_split(base_json['data'], train_size=0.8, test_size=0.2, random_state=123, shuffle=True)
 
 train_path = os.path.join(PATH, 'data', 'train_preprocessed_data.json')
 print("Train 데이터셋 저장")
+print(len(train_data))
 train_json = {'data' : train_data}
 with open(train_path,'w') as j:
     json.dump(train_json,j,ensure_ascii=False, indent=4)
 
 test_path = os.path.join(PATH, 'data', 'test_preprocessed_data.json')
 print("Test 데이터셋 저장")
+print(len(test_data))
 test_json = {'data' : test_data}
 with open(test_path,'w') as j:
     json.dump(test_json,j,ensure_ascii=False, indent=4)
