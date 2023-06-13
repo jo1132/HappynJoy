@@ -107,9 +107,8 @@ def main():
 
     print('predict:',emo_map[pred.argmax().item()])
     print(item['Emotion'])
-    print('total time:', total_time - time.time())
-    print('predict time:', pred_time, time.time())
-
+    print('total time:', time.time() - total_time)
+    print('predict time:', time.time() - pred_time)
 
 if __name__ == '__main__':
     import os
