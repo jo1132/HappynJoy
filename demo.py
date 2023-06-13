@@ -15,6 +15,8 @@ from utils import *
 from transformers import Wav2Vec2Processor, Wav2Vec2Model
 import soundfile as sf
 
+import time
+
 #def main():
 text_conf = pd.Series(text_config)
 emo_map = {0: 'neutral',
@@ -38,6 +40,10 @@ audio = item['wav']
 encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
 return_hidden_state = False
 processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
+
+# total time
+total_time = time.time()
+
 path = './TOTAL/' + audio
 wav, _ = sf.read(path)
 if len(wav.shape) > 1:
@@ -60,9 +66,14 @@ data = {
 #test_data = MERGEDataset(data_option='test', path='./data/')
 #test_data.prepare_text_data(text_conf)
 
-model_name = './ckpt/best_student.pt'
+model_name = './ckpt/best_multimodal_student.pt'
 model = torch.load(model_name)
 
+# predict time
+pred_time = time.time()
 pred = model([data])
+
 print('predict:',emo_map[pred.argmax().item()])
 print(item['Emotion'])
+print('total time:', total_time - time.time())
+print('predict time:', pred_time, time.time())
