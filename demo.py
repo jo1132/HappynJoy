@@ -16,6 +16,37 @@ from transformers import Wav2Vec2Processor, Wav2Vec2Model
 import soundfile as sf
 
 import time
+def parse_args():
+    parser = argparse.ArgumentParser(description='get arguments')
+    parser.add_argument(
+        '--batch',
+        default=test_config['batch_size'],
+        type=int,
+        required=False,
+        help='batch size'
+    )
+
+    parser.add_argument(
+        '--cuda',
+        default=test_config['cuda'],
+        help='cuda'
+    )
+
+    parser.add_argument(
+        '--model_name',
+        type=str,
+        help='checkpoint name to load'
+    )
+
+    parser.add_argument(
+        '--all',
+        action='store_true',
+        help='test all model ckpt in dir'
+    )
+
+    args = parser.parse_args()
+    return args
+args = parse_args()
 
 def main():
     # model on mem
