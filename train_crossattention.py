@@ -46,7 +46,7 @@ def parse_args():
     )
     parser.add_argument(
         '--cuda',
-        default='cuda:0',
+        default=None,
         help='class weight'
     )
 

@@ -15,22 +15,22 @@ class MultiheadAttention(nn.Module):
     def __init__(self, embed_dim, num_heads, attn_dropout=0.,
                  bias=True, add_bias_kv=False, add_zero_attn=False):
         super().__init__()
-        self.embed_dim = embed_dim
+        self.embed_dim = int(embed_dim)
         self.num_heads = num_heads
         self.attn_dropout = attn_dropout
         self.head_dim = embed_dim // num_heads
         assert self.head_dim * num_heads == self.embed_dim, "embed_dim must be divisible by num_heads"
         self.scaling = self.head_dim ** -0.5
 
-        self.in_proj_weight = Parameter(torch.Tensor(3 * embed_dim, embed_dim))
+        self.in_proj_weight = Parameter(torch.Tensor(3 * self.embed_dim, self.embed_dim))
         self.register_parameter('in_proj_bias', None)
         if bias:
-            self.in_proj_bias = Parameter(torch.Tensor(3 * embed_dim))
-        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
+            self.in_proj_bias = Parameter(torch.Tensor(3 * self.embed_dim))
+        self.out_proj = nn.Linear(self.embed_dim, self.embed_dim, bias=bias)
 
         if add_bias_kv:
-            self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
-            self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
+            self.bias_k = Parameter(torch.Tensor(1, 1, self.embed_dim))
+            self.bias_v = Parameter(torch.Tensor(1, 1, self.embed_dim))
         else:
             self.bias_k = self.bias_v = None
 

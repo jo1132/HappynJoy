@@ -133,8 +133,11 @@ def main():
     cross_attention_conf = pd.Series(cross_attention_config)
 
     print(audio_conf)
+    print('---------------------------')
     print(text_conf)
+    print('---------------------------')
     print(cross_attention_conf)
+    print('---------------------------')
     print(train_config)
 
     audio_conf['path'] = './TOTAL/'

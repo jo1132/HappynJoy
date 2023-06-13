@@ -73,11 +73,12 @@ class SpeechExtractorForCrossAttention():
 
     def __call__(self,batch):
         hidden_batch = torch.Tensor().to(self.args.cuda)
-        file_name = [data['wav'][:-4]+'.pt' for data in batch]
+        #file_name = [data['wav'][:-4]+'.pt' for data in batch]
 
-        for data in file_name:
+        for data in batch:
             # 미리 인코딩한 데이터셋 
-            hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
+            #hidden = torch.load(self.file_path+'hidden_states/'+data,map_location=self.args.cuda)
+            hidden = torch.tensor(data['wav'])
             seq = hidden.size()[1]
             if seq > self.max_len:
                 # truncation
@@ -115,6 +116,7 @@ class TextEncoderForCrossAttention(nn.Module):
             params.requires_grad = False
 
     def forward(self,batch):
+        
         data = [d['dialogue'] for d in batch]
         inputs = self.tokenizer(data,max_length=self.args.max_length,padding='max_length',return_tensors='pt',
                                 truncation=True)

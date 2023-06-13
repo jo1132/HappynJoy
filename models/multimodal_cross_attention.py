@@ -251,6 +251,8 @@ class MultiModalForCrossAttention(nn.Module):
             
         # 멀티모달 데이터를 사용하는 멀티모달 교사 데이터 훈련시 forward
         else:
+            print(batch)
+            print(type(batch))
             text_out = self.text_encoder(batch)
             x_text = text_out.transpose(1, 2)
             proj_text = x_text.permute(2, 0, 1)
