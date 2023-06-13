@@ -64,5 +64,5 @@ cross_attention_config = {
 
 test_config = {
     'batch_size': 1,
-    'cuda': 'cuda:0'
+    'cuda': 'cpu'
 }

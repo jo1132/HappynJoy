@@ -17,63 +17,70 @@ import soundfile as sf
 
 import time
 
-#def main():
-text_conf = pd.Series(text_config)
-emo_map = {0: 'neutral',
-            1: 'happy',
-            2: 'surprise',
-            3: 'angry',
-            4: 'sad',
-            5: 'disgust',
-            6: 'fear'}
+def main():
+    # model on mem
+    model_name = './ckpt/best_multimodal_student.pt'
+    model = torch.load(model_name, map_location=torch.device('cpu'))
 
-PATH = './data/test_preprocessed_data.json'
+    # encoder on mem
+    encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
+    return_hidden_state = False
+    processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
-with open(PATH,'r') as file:
-    base_json = json.load(file)
+    text_conf = pd.Series(text_config)
+    emo_map = {0: 'neutral',
+                1: 'happy',
+                2: 'surprise',
+                3: 'angry',
+                4: 'sad',
+                5: 'disgust',
+                6: 'fear'}
 
-item = base_json['data'][0]
-text = item['utterance']
-audio = item['wav']
+    PATH = './data/test_preprocessed_data.json'
 
-# encoding
-encoder = Wav2Vec2Model.from_pretrained("kresnik/wav2vec2-large-xlsr-korean")
-return_hidden_state = False
-processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
+    with open(PATH,'r') as file:
+        base_json = json.load(file)
 
-# total time
-total_time = time.time()
+    item = base_json['data'][0]
+    text = item['utterance']
+    audio = item['wav']
 
-path = './TOTAL/' + audio
-wav, _ = sf.read(path)
-if len(wav.shape) > 1:
-    wav = wav.reshape((1,-1)).squeeze()
+    # total time
+    total_time = time.time()
 
-inputs = processor(wav,
-                    sampling_rate=16000,
-                    return_attention_mask=True,
-                    return_tensors="pt")
-audio = encoder(output_hidden_states=return_hidden_state, **inputs)
-audio = audio.last_hidden_state
+    path = './TOTAL/' + audio
+    wav, _ = sf.read(path)
+    if len(wav.shape) > 1:
+        wav = wav.reshape((1,-1)).squeeze()
+
+    inputs = processor(wav,
+                        sampling_rate=16000,
+                        return_attention_mask=True,
+                        return_tensors="pt")
+    audio = encoder(output_hidden_states=return_hidden_state, **inputs)
+    audio = audio.last_hidden_state
 
 
-item['dialogue'] = text
+    item['dialogue'] = text
 
-data = {
-    'dialogue' : text,
-    'wav' : audio,
-}
-#test_data = MERGEDataset(data_option='test', path='./data/')
-#test_data.prepare_text_data(text_conf)
+    data = {
+        'dialogue' : text,
+        'wav' : audio,
+    }
+    #test_data = MERGEDataset(data_option='test', path='./data/')
+    #test_data.prepare_text_data(text_conf)
 
-model_name = './ckpt/best_multimodal_student.pt'
-model = torch.load(model_name)
+    # predict time
+    pred_time = time.time()
+    pred = model([data])
 
-# predict time
-pred_time = time.time()
-pred = model([data])
+    print('predict:',emo_map[pred.argmax().item()])
+    print(item['Emotion'])
+    print('total time:', total_time - time.time())
+    print('predict time:', pred_time, time.time())
 
-print('predict:',emo_map[pred.argmax().item()])
-print(item['Emotion'])
-print('total time:', total_time - time.time())
-print('predict time:', pred_time, time.time())
+
+if __name__ == '__main__':
+    import os
+    os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
+    main()
